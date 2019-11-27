@@ -5,20 +5,11 @@ import os
 
 #TODO: we probabally want to be able to cull the number of articles???
 
-def import_data_from_scratch(path="data/"):
+def import_data_from_scratch(path="data/", max_files_per_outlet = 3000):
     #This was used to create the master csv. No need to use it again unless I messed up in making it
 
     all_the_news_path = path + "all-the-news/"
     bbc_news_summary_path = os.path.dirname(os.path.abspath(__file__)) +"/" +path + "bbc-news-summary/"
-
-    bbc_files = [path + "bbc-news-summary/business/" + i for i in os.listdir(bbc_news_summary_path+"business/") if i.endswith("txt")]
-    bbc_files.extend([path + "bbc-news-summary/entertainment/" + i for i in os.listdir(bbc_news_summary_path+"entertainment/") if i.endswith("txt")])
-    bbc_files.extend([path + "bbc-news-summary/politics/" + i for i in os.listdir(bbc_news_summary_path+"politics/") if i.endswith("txt")])
-    bbc_files.extend([path + "bbc-news-summary/sport/" + i for i in os.listdir(bbc_news_summary_path+"sport/") if i.endswith("txt")])
-    bbc_files.extend([path + "bbc-news-summary/tech/" + i for i in os.listdir(bbc_news_summary_path+"tech/") if i.endswith("txt")])
-
-
-    print(bbc_news_summary_path)
 
     atn_frames = []
 
@@ -27,17 +18,29 @@ def import_data_from_scratch(path="data/"):
 
     df = pd.concat(atn_frames)
 
-    for file in bbc_files:
-        with open(file, encoding="utf8", errors='ignore') as f:
-            text = f.read()
-            df = df.append({'publication' : 'BBC', 'content' : text} , ignore_index=True)
 
+    bbc_subjects = ['business', 'entertainment', 'politics', 'sport', 'tech']
+
+    for subject in bbc_subjects:
+        bbc_files = [path + "bbc-news-summary/" +subject + "/" + i for i in os.listdir(bbc_news_summary_path+ subject+"/") if i.endswith("txt")]
+
+        for file in bbc_files:
+            with open(file, encoding="utf8", errors='ignore') as f:
+                text = " ".join(f.readlines()[1:])
+                df = df.append({'publication' : 'BBC_'+subject, 'content' : text} , ignore_index=True)
+
+    sampled = []
+
+    for pub in df.publication.unique():
+        sampled.append(df.loc[df['publication'] == pub].head(max_files_per_outlet))
+
+    df = pd.concat(sampled, ignore_index = True)
 
 
     df['content'] = df['content'].apply(lambda x: x.replace('"', "'"))
     df['content'] = df['content'].apply(lambda x: x.replace('\n', ' ').replace('\r', ''))
 
-    df.to_csv(path+"master.csv")
+    df.to_csv(path+"sampled.csv")
 
 
 def import_data(num, sentences_or_tokens=1, path="data/"):
@@ -60,7 +63,7 @@ def import_data(num, sentences_or_tokens=1, path="data/"):
     `Pandas.DataFrame`: 
         A dataframe holding the publisher and tokenized content of the articles
     '''
-    data_path = path+"master.csv"
+    data_path = path+"sampled.csv"
 
     df = pd.read_csv(data_path)
 
@@ -69,9 +72,10 @@ def import_data(num, sentences_or_tokens=1, path="data/"):
     else:
         df['content'] = df['content'].apply(lambda x: tokens_clip_by_sentence(x, num))
 
+    df.to_pickle(path+"tokenized.pkl")
+
     return df
  
-
 
 
 def tokens_clip_by_sentence(text, num_sentences):
@@ -99,7 +103,7 @@ def tokens_clip_by_sentence(text, num_sentences):
     shortened_text = " ".join(sentences)
     return word_tokenize(shortened_text)
 
-def tokens_clip_by_nearest_sentence(text, num_tokens):
+def tokens_clip_by_nearest_sentence(text, num_tokens=200):
     '''
     Tokenizes sentences from the beginnnig to get as close num_tokens total tokens as possible
 
@@ -139,15 +143,15 @@ def tokens_clip_by_nearest_sentence(text, num_tokens):
     return curr_tokens
 
 if __name__ == "__main__":
-    test = "I like cats. Cats are good."
     #nltk.download('punkt') 
 
 
-    df = import_data(50)
-    print(df.head(3))
-    print(df.tail(3))
+    df = import_data(200)
+    print(df.head(5))
+    print(df.tail(5))
 
     '''
+    test = "I like cats. Cats are good."
     print(tokens_clip_by_sentence(test, 1))
     print(tokens_clip_by_sentence(test, 2))
     print(tokens_clip_by_sentence(test, 3))
