@@ -3,7 +3,6 @@ from nltk.tokenize import word_tokenize
 import pandas as pd
 import os
 
-#TODO: we probabally want to be able to cull the number of articles???
 
 def import_data_from_scratch(path="data/", max_files_per_outlet = 3000):
     #This was used to create the master csv. No need to use it again unless I messed up in making it
@@ -39,6 +38,7 @@ def import_data_from_scratch(path="data/", max_files_per_outlet = 3000):
 
     df['content'] = df['content'].apply(lambda x: x.replace('"', "'"))
     df['content'] = df['content'].apply(lambda x: x.replace('\n', ' ').replace('\r', ''))
+    df['content'] = df['content'].apply(lambda x: x.lower())
 
     df.to_csv(path+"sampled.csv")
 
@@ -146,9 +146,8 @@ if __name__ == "__main__":
     #nltk.download('punkt') 
 
 
+    import_data_from_scratch()
     df = import_data(200)
-    print(df.head(5))
-    print(df.tail(5))
 
     '''
     test = "I like cats. Cats are good."
