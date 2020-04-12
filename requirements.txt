@@ -55,7 +55,7 @@ et-xmlfile==1.0.1
 fa2==0.2
 fastcache==1.0.2
 filelock==2.0.12
-Flask==0.12.2
+Flask==1.0
 Flask-Cors==3.0.3
 ForceAtlas2==1.0
 future==0.17.1
