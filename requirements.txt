@@ -29,7 +29,7 @@ boto3==1.10.40
 botocore==1.13.40
 Bottleneck==1.2.1
 cachetools==3.1.1
-certifi==2019.3.9
+certifi==2022.12.7
 cffi==1.11.5
 chardet==3.0.4
 click==6.7
